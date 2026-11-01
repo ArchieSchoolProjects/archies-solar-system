@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071329">
+  <meta name="description" content="Join Archie from Jersey on an animated, interactive tour of our solar system.">
+  <title>Archie's Solar System</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: ui-rounded, "Avenir Next", Avenir, system-ui, sans-serif;
+      color: #f4f6ff;
+      background: #071329;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      --muted: #aab8d5;
+      --panel: rgba(15, 31, 59, .87);
+      --line: rgba(175, 198, 245, .2);
+      --glow: #91d8ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+      background:
+        radial-gradient(ellipse at 50% 34%, rgba(35, 67, 117, .36), transparent 58%),
+        radial-gradient(ellipse at 8% 85%, rgba(30, 70, 111, .24), transparent 42%),
+        #071329;
+    }
+
+    button { font: inherit; }
+
+    .page {
+      width: min(1240px, 100%);
+      margin-inline: auto;
+      padding: 26px clamp(16px, 4vw, 48px) 32px;
+    }
+
+    .topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      color: #fff;
+      font-size: .95rem;
+      font-weight: 750;
+      letter-spacing: .02em;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 38px;
+      aspect-ratio: 1;
+      place-items: center;
+      border: 1px solid rgba(255, 222, 125, .48);
+      border-radius: 50%;
+      background: rgba(255, 188, 69, .1);
+      font-size: 1.25rem;
+    }
+
+    .location {
+      color: var(--muted);
+      font-size: .8rem;
+      letter-spacing: .04em;
+    }
+
+    .heading { margin: 0 0 19px; text-align: center; }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 5vw, 3.2rem);
+      letter-spacing: -.045em;
+      line-height: 1.1;
+    }
+
+    .subtitle {
+      margin: 9px 0 0;
+      color: var(--muted);
+      font-size: clamp(.9rem, 2vw, 1.05rem);
+    }
+
+    .tour-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 270px;
+      align-items: stretch;
+      gap: 17px;
+    }
+
+    .sky-card, .fact-card {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(145deg, rgba(19, 38, 70, .83), rgba(9, 23, 47, .83));
+      box-shadow: 0 22px 65px rgba(0, 0, 0, .22);
+    }
+
+    .sky-card { position: relative; min-width: 0; overflow: hidden; }
+
+    .sky {
+      position: relative;
+      display: grid;
+      min-height: 410px;
+      aspect-ratio: 1.2;
+      place-items: center;
+      overflow: hidden;
+      isolation: isolate;
+      background-image:
+        radial-gradient(1px 1px at 12% 18%, #d7e8ff 60%, transparent),
+        radial-gradient(1.5px 1.5px at 82% 24%, #fff 60%, transparent),
+        radial-gradient(1px 1px at 26% 76%, #a9ccff 60%, transparent),
+        radial-gradient(1.5px 1.5px at 68% 84%, #fff 60%, transparent),
+        radial-gradient(1px 1px at 46% 12%, #d7e8ff 60%, transparent),
+        radial-gradient(1px 1px at 92% 63%, #c4dcff 60%, transparent);
+      background-size: 100% 100%;
+    }
+
+    .starfield {
+      position: absolute;
+      z-index: -1;
+      inset: -10%;
+      opacity: .48;
+      background-image: radial-gradient(1px 1px at 20% 30%, #fff 60%, transparent),
+        radial-gradient(1px 1px at 80% 70%, #b9d1ff 60%, transparent),
+        radial-gradient(1px 1px at 55% 48%, #fff 60%, transparent);
+      background-size: 113px 97px, 157px 131px, 193px 173px;
+      animation: twinkle 5s ease-in-out infinite alternate;
+    }
+
+    .system {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 410px;
+      transform: scale(2.05);
+      transform-origin: 50% 50%;
+      transition: transform 3.2s cubic-bezier(.2, .75, .2, 1);
+    }
+
+    .page.ready .system { transform: scale(1); }
+
+    .sun {
+      position: absolute;
+      z-index: 3;
+      top: 50%;
+      left: 50%;
+      display: grid;
+      width: clamp(36px, 6vw, 60px);
+      aspect-ratio: 1;
+      padding: 0;
+      place-items: center;
+      border: 1px solid rgba(255, 229, 160, .8);
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 32%, #fff5ba, #ffc246 38%, #f47e2d 76%);
+      box-shadow: 0 0 22px 7px rgba(255, 177, 63, .34), 0 0 56px 16px rgba(255, 166, 56, .17);
+      color: #fff;
+      cursor: pointer;
+      transform: translate(-50%, -50%);
+    }
+
+    .sun:focus-visible, .planet:focus-visible, .control:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: 4px;
+    }
+
+    .orbit {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: var(--orbit-width);
+      height: auto;
+      aspect-ratio: 1;
+      border: 1px solid rgba(170, 198, 245, .2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .orbit-turn {
+      position: absolute;
+      inset: 0;
+      animation: orbit-spin var(--duration) linear infinite;
+      animation-delay: var(--start, 0s);
+      animation-play-state: var(--spin-state, running);
+      pointer-events: none;
+    }
+
+    .planet {
+      position: absolute;
+      top: 50%;
+      left: 100%;
+      display: grid;
+      width: var(--size);
+      min-width: var(--size);
+      aspect-ratio: 1;
+      padding: 0;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, .54);
+      border-radius: 50%;
+      background: var(--planet-color);
+      box-shadow: inset -5px -5px 8px rgba(0, 0, 0, .34), 0 0 13px var(--planet-glow, transparent);
+      color: #fff;
+      cursor: pointer;
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+    }
+
+    .planet:hover { filter: brightness(1.22); }
+
+    .planet-label {
+      position: absolute;
+      left: 50%;
+      top: calc(100% + 5px);
+      transform: translateX(-50%);
+      padding: 2px 6px;
+      border-radius: 7px;
+      background: rgba(6, 16, 34, .78);
+      color: #edf4ff;
+      font-size: clamp(.55rem, .9vw, .7rem);
+      font-weight: 700;
+      white-space: nowrap;
+      animation: counter-spin var(--duration) linear infinite;
+      animation-delay: var(--start, 0s);
+      pointer-events: none;
+    }
+
+    .page.paused .orbit-turn, .page.paused .planet-label { animation-play-state: paused; }
+    .mercury { z-index: 8; --orbit-width: 17%; --duration: 8s; --start: -2s; --size: 11px; --planet-color: #b6b0a7; }
+    .venus { z-index: 7; --orbit-width: 27%; --duration: 13s; --start: -8.63s; --size: 17px; --planet-color: #e7ae65; }
+    .earth { z-index: 6; --orbit-width: 37%; --duration: 18s; --start: -16.5s; --size: 19px; --planet-color: radial-gradient(circle at 35% 30%, #8de6ff, #267dd5 48%, #1752a2); --planet-glow: rgba(76, 182, 255, .5); }
+    .mars { z-index: 5; --orbit-width: 47%; --duration: 25s; --start: -3.4s; --size: 15px; --planet-color: #d86b4d; }
+    .jupiter { z-index: 4; --orbit-width: 55%; --duration: 38s; --start: -13s; --size: 34px; --planet-color: repeating-linear-gradient(0deg, #c88555 0 4px, #f1d0a3 5px 8px, #a96044 9px 11px); }
+    .saturn { z-index: 3; --orbit-width: 62%; --duration: 52s; --start: -26.4s; --size: 27px; --planet-color: repeating-linear-gradient(0deg, #e6ca8b 0 5px, #b5905b 6px 9px); }
+    .uranus { z-index: 2; --orbit-width: 69%; --duration: 68s; --start: -44.98s; --size: 21px; --planet-color: #83d9df; }
+    .neptune { z-index: 1; --orbit-width: 76%; --duration: 84s; --start: -67.4s; --size: 20px; --planet-color: #416ee0; }
+
+    .saturn .planet::after {
+      position: absolute;
+      width: 160%;
+      height: 48%;
+      border: 2px solid rgba(238, 215, 164, .82);
+      border-radius: 50%;
+      content: "";
+      transform: rotate(-18deg);
+    }
+
+    .journey {
+      position: absolute;
+      z-index: 6;
+      inset: 0;
+      overflow: hidden;
+      background: #102748;
+      transition: opacity .8s ease, visibility .8s;
+    }
+
+    .journey-art {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      transform: scale(1);
+      transform-origin: 50% 50%;
+      transition: transform 2.4s cubic-bezier(.2, .75, .2, 1), opacity .8s ease;
+    }
+
+    .journey-caption {
+      position: absolute;
+      z-index: 1;
+      left: 50%;
+      width: max-content;
+      max-width: calc(100% - 28px);
+      padding: 10px 16px;
+      border: 1px solid rgba(210, 230, 255, .38);
+      border-radius: 16px;
+      background: rgba(7, 20, 42, .88);
+      box-shadow: 0 10px 32px rgba(0, 0, 0, .28);
+      color: #fff;
+      text-align: center;
+      transform: translate(-50%, 8px);
+      opacity: 0;
+      transition: opacity .45s ease, transform .45s ease;
+    }
+
+    .journey-caption strong {
+      display: block;
+      color: #a8d7ff;
+      font-size: .68rem;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .boy-caption {
+      top: 10%;
+      font-size: clamp(1rem, 3.1vw, 1.45rem);
+      font-weight: 750;
+    }
+
+    .jersey-caption { top: 1%; bottom: auto; }
+    .space-caption { top: 12%; }
+
+    .page.intro-boy .journey-art { transform: scale(3.7); transform-origin: 50% 39%; }
+    .page.intro-jersey .journey-art { transform: scale(1); transform-origin: 50% 68%; }
+    .page.intro-boy .mouth-smile { animation: talking-smile 1.2s steps(1, end) infinite; }
+    .page.intro-boy .mouth-open { animation: talking-open 1.2s steps(1, end) infinite; }
+    .page.intro-space .journey { background: radial-gradient(ellipse at center, #183d70, #071329 75%); }
+    .page.intro-space .journey-art { transform: scale(.88); opacity: .14; }
+    .page.intro-space .system { transform: scale(1.35); }
+    .page.intro-boy .boy-caption,
+    .page.intro-jersey .jersey-caption,
+    .page.intro-space .space-caption {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+
+    .page.ready .journey { visibility: hidden; opacity: 0; pointer-events: none; }
+
+    .controls {
+      position: absolute;
+      z-index: 4;
+      right: 12px;
+      bottom: 12px;
+      left: 12px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      opacity: 0;
+      transition: opacity .6s;
+    }
+
+    .page.ready .controls { opacity: 1; }
+
+    .control {
+      min-height: 38px;
+      padding: 8px 13px;
+      border: 1px solid rgba(180, 203, 245, .3);
+      border-radius: 99px;
+      background: rgba(9, 23, 46, .88);
+      color: #f4f6ff;
+      cursor: pointer;
+      font-size: .82rem;
+      font-weight: 700;
+    }
+
+    .control:hover { background: #1b355e; }
+
+    .fact-card {
+      display: flex;
+      min-height: 410px;
+      flex-direction: column;
+      padding: 23px 21px;
+    }
+
+    .fact-eyebrow {
+      margin: 1px 0 10px;
+      color: #9dcaff;
+      font-size: .72rem;
+      font-weight: 850;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .fact-card h2 {
+      margin: 0;
+      font-size: 1.7rem;
+      letter-spacing: -.03em;
+    }
+
+    .fact-position { margin: 5px 0 16px; color: var(--muted); font-size: .88rem; }
+
+    .fact-text {
+      margin: 0;
+      color: #e4ecfc;
+      font-size: 1rem;
+      line-height: 1.65;
+    }
+
+    .fact-year {
+      margin: auto 0 0;
+      padding-top: 21px;
+      color: #bfd0ec;
+      font-size: .84rem;
+      line-height: 1.55;
+    }
+
+    .fact-year strong { color: #fff; }
+
+    .legend {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 5px 0;
+      color: var(--muted);
+      font-size: .78rem;
+      line-height: 1.5;
+    }
+
+    .legend strong { color: #e7efff; }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @keyframes orbit-spin { to { transform: rotate(360deg); } }
+    @keyframes counter-spin {
+      from { transform: translateX(-50%) rotate(0deg); }
+      to { transform: translateX(-50%) rotate(-359deg); }
+    }
+    @keyframes twinkle { to { opacity: .8; transform: translateY(-4px); } }
+    @keyframes talking-smile { 0%, 45%, 100% { opacity: 1; } 46%, 75% { opacity: 0; } }
+    @keyframes talking-open { 0%, 45%, 100% { opacity: 0; } 46%, 75% { opacity: 1; } }
+
+    @media (max-width: 800px) {
+      .tour-layout { grid-template-columns: 1fr; }
+      .sky { min-height: 0; aspect-ratio: 1.04; }
+      .system { min-height: 0; }
+      .fact-card { min-height: 0; }
+      .fact-year { margin-top: 0; }
+      .planet-label { font-size: .57rem; }
+    }
+
+    @media (max-width: 480px) {
+      .page { padding-top: 17px; }
+      .topline { margin-bottom: 18px; }
+      .location { font-size: .7rem; }
+      .sky { aspect-ratio: 1.04; }
+      .controls { right: 7px; bottom: 7px; left: 7px; gap: 5px; }
+      .control { min-height: 35px; padding: 7px 10px; font-size: .76rem; }
+      .legend { flex-direction: column; gap: 2px; }
+      .fact-card { padding: 20px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+      .system { transform: scale(1); }
+      .page.intro-boy .journey-art,
+      .page.intro-jersey .journey-art,
+      .page.intro-space .journey-art { transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page" id="page">
+    <header class="topline">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">☀</span> ARCHIE'S SPACE TOUR</div>
+      <div class="location">Broadcasting from Jersey, Channel Islands 🌊</div>
+    </header>
+
+    <section class="heading" aria-labelledby="page-title">
+      <h1 id="page-title">Our Solar System</h1>
+      <p class="subtitle">Eight planets, one star, and a whole lot to explore.</p>
+    </section>
+
+    <section class="tour-layout" aria-label="Interactive solar system tour">
+      <div class="sky-card">
+        <div class="sky" aria-label="Animated diagram of the Sun and eight planets">
+          <div class="starfield" aria-hidden="true"></div>
+          <div class="system" id="system">
+            <button class="sun" type="button" data-body="Sun" aria-label="Explore the Sun">☀</button>
+            <div class="orbit mercury"><div class="orbit-turn"><button class="planet" type="button" data-body="Mercury" aria-label="Explore Mercury"><span class="planet-label">Mercury</span></button></div></div>
+            <div class="orbit venus"><div class="orbit-turn"><button class="planet" type="button" data-body="Venus" aria-label="Explore Venus"><span class="planet-label">Venus</span></button></div></div>
+            <div class="orbit earth"><div class="orbit-turn"><button class="planet" type="button" data-body="Earth" aria-label="Explore Earth"><span class="planet-label">Earth</span></button></div></div>
+            <div class="orbit mars"><div class="orbit-turn"><button class="planet" type="button" data-body="Mars" aria-label="Explore Mars"><span class="planet-label">Mars</span></button></div></div>
+            <div class="orbit jupiter"><div class="orbit-turn"><button class="planet" type="button" data-body="Jupiter" aria-label="Explore Jupiter"><span class="planet-label">Jupiter</span></button></div></div>
+            <div class="orbit saturn"><div class="orbit-turn"><button class="planet" type="button" data-body="Saturn" aria-label="Explore Saturn"><span class="planet-label">Saturn</span></button></div></div>
+            <div class="orbit uranus"><div class="orbit-turn"><button class="planet" type="button" data-body="Uranus" aria-label="Explore Uranus"><span class="planet-label">Uranus</span></button></div></div>
+            <div class="orbit neptune"><div class="orbit-turn"><button class="planet" type="button" data-body="Neptune" aria-label="Explore Neptune"><span class="planet-label">Neptune</span></button></div></div>
+          </div>
+          <div class="journey" id="journey" aria-label="Archie's journey from Jersey to the solar system">
+            <svg class="journey-art" viewBox="0 0 1000 560" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="journey-title journey-description">
+              <title id="journey-title">Archie on the island of Jersey</title>
+              <desc id="journey-description">A cartoon boy stands in front of the green island of Jersey, surrounded by the blue sea and stars.</desc>
+              <defs>
+                <linearGradient id="night-sky" x2="0" y2="1">
+                  <stop stop-color="#102c55"/>
+                  <stop offset="1" stop-color="#4c8db2"/>
+                </linearGradient>
+                <linearGradient id="ocean" x2="0" y2="1">
+                  <stop stop-color="#3184a9"/>
+                  <stop offset="1" stop-color="#123d70"/>
+                </linearGradient>
+                <linearGradient id="land" x2=".8" y2="1">
+                  <stop stop-color="#9ad17c"/>
+                  <stop offset="1" stop-color="#438867"/>
+                </linearGradient>
+                <linearGradient id="jumper" x2="1" y2="1">
+                  <stop stop-color="#7965b5"/>
+                  <stop offset="1" stop-color="#493b7e"/>
+                </linearGradient>
+              </defs>
+              <rect width="1000" height="560" fill="url(#night-sky)"/>
+              <circle cx="130" cy="96" r="2" fill="#fff"/>
+              <circle cx="840" cy="101" r="3" fill="#d9edff"/>
+              <circle cx="768" cy="205" r="2" fill="#fff"/>
+              <circle cx="230" cy="191" r="3" fill="#d9edff"/>
+              <path d="M0 250 Q250 225 500 254 T1000 242 V560 H0Z" fill="url(#ocean)"/>
+              <path d="M20 318 Q174 295 323 318 M691 294 Q832 278 986 302 M4 411 Q147 388 291 406 M722 385 Q853 369 999 393 M33 499 Q168 481 292 495 M752 475 Q875 462 990 481"
+                    fill="none" stroke="#88cae0" stroke-opacity=".35" stroke-width="4" stroke-linecap="round"/>
+              <path transform="translate(40 -160) scale(1.1)"
+                    d="M147 152 L168 179 L195 186 L199 197 L209 200 L224 222 L221 234 L230 232 L234 216 L244 221 L247 210 L260 218 L271 211 L278 221 L285 221 L291 211 L307 216 L309 205 L337 178 L354 179 L356 163 L376 171 L380 162 L419 204 L471 205 L473 219 L481 225 L497 224 L501 218 L507 227 L520 229 L532 204 L542 204 L545 212 L560 212 L564 231 L582 241 L591 285 L581 289 L584 297 L592 288 L626 297 L634 288 L667 285 L685 269 L686 283 L704 292 L703 298 L691 300 L693 308 L717 307 L724 314 L734 311 L741 323 L763 323 L763 355 L781 365 L761 369 L755 384 L738 383 L736 392 L743 394 L752 419 L761 420 L758 434 L770 439 L757 471 L774 474 L775 483 L744 485 L725 516 L722 577 L730 619 L723 618 L721 626 L732 624 L732 634 L713 646 L680 622 L648 616 L631 627 L609 625 L600 642 L577 640 L540 583 L517 571 L496 575 L490 605 L472 610 L460 588 L475 575 L488 577 L492 565 L480 552 L473 559 L458 557 L467 550 L466 523 L450 502 L411 476 L420 474 L418 466 L409 468 L411 475 L376 468 L339 471 L310 491 L303 480 L290 484 L292 497 L305 497 L305 504 L297 501 L295 510 L306 517 L304 549 L318 571 L313 590 L310 574 L305 574 L301 613 L290 609 L290 597 L282 592 L282 587 L299 586 L294 572 L284 573 L281 585 L264 580 L257 594 L238 590 L244 583 L242 559 L249 555 L250 543 L220 516 L204 520 L192 545 L182 540 L178 549 L160 546 L134 559 L111 552 L97 533 L85 535 L79 517 L91 509 L104 510 L99 497 L121 487 L133 462 L143 426 L143 392 L128 320 L103 281 L99 258 L84 242 L73 247 L74 226 L62 209 L62 196 L88 158 L93 177 L116 167 L128 174 L139 171 L139 178 L147 180 L149 170 L141 168Z"
+                    fill="url(#land)" stroke="#d4eaa7" stroke-width="5" stroke-linejoin="round"/>
+              <path d="M276 364 Q390 390 475 370 T680 387 M339 412 Q425 386 517 410 T695 404 M428 342 Q454 385 444 435 M567 341 Q538 389 563 446"
+                    fill="none" stroke="#d7cc9d" stroke-width="5" stroke-linecap="round" opacity=".8"/>
+              <g fill="#f3d9a8" stroke="#fff0cc" stroke-width="2">
+                <path d="M294 352h23v18h-23z M325 351h19v22h-19z M688 365h24v20h-24z M660 362h18v18h-18z M389 408h21v18h-21z"/>
+              </g>
+              <g aria-hidden="true">
+                <ellipse cx="517" cy="486" rx="73" ry="15" fill="#102d4b" opacity=".5"/>
+                <path d="M465 357 Q463 328 486 319 L547 319 Q575 331 574 362 L599 454 Q542 482 441 454Z" fill="url(#jumper)" stroke="#b8a9df" stroke-width="5"/>
+                <path d="M468 365 Q437 371 424 407 L406 452 Q419 469 439 457 L475 410 M571 365 Q599 374 609 411 L625 448 Q615 466 594 455 L565 412"
+                      fill="#625296" stroke="#b8a9df" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M489 320 L490 352 519 371 546 350 543 320" fill="#d99d72"/>
+                <path d="M486 322 L500 332 518 348 536 332 550 322 542 346 519 362 493 345Z"
+                      fill="#f3f1e9" stroke="#d6d3cf" stroke-width="3" stroke-linejoin="round"/>
+                <path d="M442 447 Q519 466 597 447 L599 460 Q520 481 440 461Z"
+                      fill="#40356f" stroke="#b8a9df" stroke-width="3"/>
+                <path d="M405 444 L439 451 435 464 402 456Z M593 451 L626 442 630 454 597 465Z"
+                      fill="#40356f" stroke="#b8a9df" stroke-width="3" stroke-linejoin="round"/>
+                <path d="M534 376 L545 371 551 378 548 390 537 393 532 386Z"
+                      fill="#4fc7b4" stroke="#b8f0df" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M539 383 L542 378 545 383 544 388 540 388Z" fill="#f3f1e9"/>
+                <ellipse cx="518" cy="248" rx="67" ry="80" fill="#f0bd91" stroke="#ffe0bd" stroke-width="5"/>
+                <path d="M451 246 Q438 195 477 166 Q523 139 563 168 Q591 191 581 245 Q566 218 550 207 Q521 224 470 211Z" fill="#513327"/>
+                <path d="M452 205 Q456 158 500 151 Q548 147 573 181 L563 199 Q530 177 498 185 Q472 190 452 205Z" fill="#69432e"/>
+                <ellipse cx="493" cy="251" rx="6" ry="9" fill="#263346"/>
+                <ellipse cx="541" cy="251" rx="6" ry="9" fill="#263346"/>
+                <path class="mouth-smile" d="M498 283 Q518 300 539 282" fill="none" stroke="#923e42" stroke-width="6" stroke-linecap="round"/>
+                <ellipse class="mouth-open" cx="518" cy="286" rx="8" ry="12" fill="#923e42" opacity="0"/>
+                <path d="M485 239 Q493 234 501 238 M533 238 Q542 234 550 239" fill="none" stroke="#513327" stroke-width="4" stroke-linecap="round"/>
+              </g>
+            </svg>
+            <div class="journey-caption boy-caption"><strong>Archie says…</strong>“I'm Archie, and this is my solar system!”</div>
+            <div class="journey-caption jersey-caption"><strong>Home sweet home</strong>Jersey, Channel Islands</div>
+            <div class="journey-caption space-caption"><strong>Ready for lift-off?</strong>From Jersey to the planets!</div>
+          </div>
+          <div class="controls" aria-label="Animation controls">
+            <button class="control" id="pause-button" type="button">⏸ Pause planets</button>
+            <button class="control" id="replay-button" type="button">↺ Replay intro</button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="fact-card" aria-live="polite" aria-atomic="true">
+        <p class="fact-eyebrow">Planet explorer</p>
+        <h2 id="fact-name">Pick a planet</h2>
+        <p class="fact-position" id="fact-position">Your space adventure starts here</p>
+        <p class="fact-text" id="fact-text">Tap or click any planet in the picture to discover a brilliant fact about it.</p>
+        <p class="fact-year" id="fact-year">Tip: choose <strong>Earth</strong> to find out what makes our home special.</p>
+      </aside>
+    </section>
+
+    <footer class="legend">
+      <span><strong>How to explore:</strong> Select a planet to read its fact. Use the buttons to pause or replay.</span>
+      <span>Planet sizes and distances are simplified — the real solar system is much, much bigger!</span>
+    </footer>
+    <p class="sr-only" id="announcement" aria-live="polite"></p>
+  </main>
+  <script>
+    const facts = {
+      Sun: {
+        position: "Our star · at the centre",
+        text: "The Sun is a star made of super-hot gas. Its light takes about 8 minutes to travel all the way to Earth!",
+        year: "The Sun is so huge that about <strong>1.3 million Earths</strong> could fit inside it."
+      },
+      Mercury: {
+        position: "Planet 1 · closest to the Sun",
+        text: "Mercury is the smallest planet. It has almost no air to keep it warm, so its days are scorching and its nights are freezing.",
+        year: "One trip around the Sun takes just <strong>88 Earth days</strong>."
+      },
+      Venus: {
+        position: "Planet 2 · Earth's bright neighbour",
+        text: "Venus is wrapped in thick clouds. They trap heat so well that Venus is the hottest planet, even though Mercury is closer to the Sun!",
+        year: "Venus spins in the opposite direction to most planets."
+      },
+      Earth: {
+        position: "Planet 3 · our home",
+        text: "Earth has oceans of liquid water and just the right conditions for lots of life. From Jersey, look up on a clear night to spot the Moon!",
+        year: "Earth is the only world we know of with <strong>life</strong>."
+      },
+      Mars: {
+        position: "Planet 4 · the Red Planet",
+        text: "Mars looks red because rusty iron dust covers much of its surface. It has giant volcanoes and ancient valleys.",
+        year: "Robots called rovers are exploring Mars right now."
+      },
+      Jupiter: {
+        position: "Planet 5 · the biggest planet",
+        text: "Jupiter is a giant ball of gas. Its Great Red Spot is a storm that has raged for hundreds of years.",
+        year: "Jupiter has <strong>more than 90 known moons</strong>."
+      },
+      Saturn: {
+        position: "Planet 6 · the ringed wonder",
+        text: "Saturn's beautiful rings are made of countless pieces of ice and rock, from tiny grains to chunks bigger than houses.",
+        year: "Saturn is so light for its size that it would <strong>float in a giant ocean</strong>."
+      },
+      Uranus: {
+        position: "Planet 7 · the sideways spinner",
+        text: "Uranus is an icy blue-green giant. It tips over so far that it rolls around the Sun on its side!",
+        year: "A season on Uranus lasts about <strong>21 Earth years</strong>."
+      },
+      Neptune: {
+        position: "Planet 8 · the windy world",
+        text: "Neptune is a deep-blue ice giant far from the Sun. It has some of the fastest winds in the solar system.",
+        year: "Sunlight takes about <strong>4 hours</strong> to reach Neptune."
+      }
+    };
+
+    const page = document.querySelector("#page");
+    const pauseButton = document.querySelector("#pause-button");
+    const replayButton = document.querySelector("#replay-button");
+    const factName = document.querySelector("#fact-name");
+    const factPosition = document.querySelector("#fact-position");
+    const factText = document.querySelector("#fact-text");
+    const factYear = document.querySelector("#fact-year");
+    const announcement = document.querySelector("#announcement");
+    let introTimers = [];
+
+    function beginTour() {
+      introTimers.forEach(window.clearTimeout);
+      introTimers = [];
+      page.classList.remove("ready", "intro-jersey", "intro-space");
+      page.classList.add("intro-boy");
+
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        page.classList.remove("intro-boy");
+        page.classList.add("ready");
+        return;
+      }
+
+      introTimers.push(window.setTimeout(() => {
+        page.classList.remove("intro-boy");
+        page.classList.add("intro-jersey");
+      }, 3000));
+      introTimers.push(window.setTimeout(() => {
+        page.classList.remove("intro-jersey");
+        page.classList.add("intro-space");
+      }, 7600));
+      introTimers.push(window.setTimeout(() => {
+        page.classList.remove("intro-space");
+        page.classList.add("ready");
+      }, 10500));
+    }
+
+    document.querySelectorAll("[data-body]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const name = button.dataset.body;
+        const fact = facts[name];
+        factName.textContent = name;
+        factPosition.textContent = fact.position;
+        factText.textContent = fact.text;
+        factYear.innerHTML = fact.year;
+        announcement.textContent = `${name}. ${fact.text} ${fact.year.replace(/<[^>]*>/g, "")}`;
+      });
+    });
+
+    pauseButton.addEventListener("click", () => {
+      const paused = page.classList.toggle("paused");
+      pauseButton.textContent = paused ? "▶ Play planets" : "⏸ Pause planets";
+      pauseButton.setAttribute("aria-pressed", String(paused));
+    });
+
+    replayButton.addEventListener("click", beginTour);
+    beginTour();
+  </script>
+</body>
+</html>
