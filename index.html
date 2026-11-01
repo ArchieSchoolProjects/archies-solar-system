@@ -384,6 +384,36 @@
       line-height: 1.65;
     }
 
+    .fact-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+      margin: 18px 0 0;
+    }
+
+    .fact-stat {
+      min-width: 0;
+      padding: 10px 9px;
+      border: 1px solid rgba(175, 198, 245, .14);
+      border-radius: 12px;
+      background: rgba(5, 17, 37, .42);
+    }
+
+    .fact-stat dt {
+      color: var(--muted);
+      font-size: .64rem;
+      line-height: 1.3;
+    }
+
+    .fact-stat dd {
+      margin: 5px 0 0;
+      color: #fff;
+      font-size: .79rem;
+      font-weight: 750;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
+    }
+
     .fact-year {
       margin: auto 0 0;
       padding-top: 21px;
@@ -538,6 +568,7 @@
         <h2 id="fact-name">Pick a planet</h2>
         <p class="fact-position" id="fact-position">Your space adventure starts here</p>
         <p class="fact-text" id="fact-text">Tap or click any planet in the picture to discover a brilliant fact about it.</p>
+        <dl class="fact-stats" id="fact-stats" aria-label="Quick facts"></dl>
         <p class="fact-year" id="fact-year">Tip: choose <strong>Earth</strong> to find out what makes our home special.</p>
       </aside>
     </section>
@@ -553,47 +584,56 @@
       Sun: {
         position: "Our star · at the centre",
         text: "The Sun is a star made of super-hot gas. Its light takes about 8 minutes to travel all the way to Earth!",
-        year: "The Sun is so huge that about <strong>1.3 million Earths</strong> could fit inside it."
+        year: "The Sun is so huge that about <strong>1.3 million Earths</strong> could fit inside it.",
+        stats: [["Diameter", "1.39 million km"], ["Surface", "5,500°C"], ["Age", "4.6 billion years"]]
       },
       Mercury: {
         position: "Planet 1 · closest to the Sun",
         text: "Mercury is the smallest planet. It has almost no air to keep it warm, so its days are scorching and its nights are freezing.",
-        year: "One trip around the Sun takes just <strong>88 Earth days</strong>."
+        year: "One trip around the Sun takes just <strong>88 Earth days</strong>.",
+        stats: [["Diameter", "4,879 km"], ["From Sun", "58 million km"], ["Moons", "0"]]
       },
       Venus: {
         position: "Planet 2 · Earth's bright neighbour",
         text: "Venus is wrapped in thick clouds. They trap heat so well that Venus is the hottest planet, even though Mercury is closer to the Sun!",
-        year: "Venus spins in the opposite direction to most planets."
+        year: "Venus spins in the opposite direction to most planets.",
+        stats: [["Diameter", "12,104 km"], ["From Sun", "108 million km"], ["Moons", "0"]]
       },
       Earth: {
         position: "Planet 3 · our home",
         text: "Earth has oceans of liquid water and just the right conditions for lots of life. From Jersey, look up on a clear night to spot the Moon!",
-        year: "Earth is the only world we know of with <strong>life</strong>."
+        year: "Earth is the only world we know of with <strong>life</strong>.",
+        stats: [["Diameter", "12,742 km"], ["From Sun", "150 million km"], ["Moons", "1"]]
       },
       Mars: {
         position: "Planet 4 · the Red Planet",
         text: "Mars looks red because rusty iron dust covers much of its surface. It has giant volcanoes and ancient valleys.",
-        year: "Robots called rovers are exploring Mars right now."
+        year: "Robots called rovers are exploring Mars right now.",
+        stats: [["Diameter", "6,779 km"], ["From Sun", "228 million km"], ["Moons", "2"]]
       },
       Jupiter: {
         position: "Planet 5 · the biggest planet",
         text: "Jupiter is a giant ball of gas. Its Great Red Spot is a storm that has raged for hundreds of years.",
-        year: "Jupiter has <strong>more than 90 known moons</strong>."
+        year: "Jupiter has <strong>more than 90 known moons</strong>.",
+        stats: [["Diameter", "139,820 km"], ["From Sun", "778 million km"], ["Moons", "More than 90"]]
       },
       Saturn: {
         position: "Planet 6 · the ringed wonder",
         text: "Saturn's beautiful rings are made of countless pieces of ice and rock, from tiny grains to chunks bigger than houses.",
-        year: "Saturn is so light for its size that it would <strong>float in a giant ocean</strong>."
+        year: "Saturn is so light for its size that it would <strong>float in a giant ocean</strong>.",
+        stats: [["Diameter", "120,500 km"], ["From Sun", "1.4 billion km"], ["Moons", "More than 270"]]
       },
       Uranus: {
         position: "Planet 7 · the sideways spinner",
         text: "Uranus is an icy blue-green giant. It tips over so far that it rolls around the Sun on its side!",
-        year: "A season on Uranus lasts about <strong>21 Earth years</strong>."
+        year: "A season on Uranus lasts about <strong>21 Earth years</strong>.",
+        stats: [["Diameter", "51,100 km"], ["From Sun", "2.9 billion km"], ["Moons", "28"]]
       },
       Neptune: {
         position: "Planet 8 · the windy world",
         text: "Neptune is a deep-blue ice giant far from the Sun. It has some of the fastest winds in the solar system.",
-        year: "Sunlight takes about <strong>4 hours</strong> to reach Neptune."
+        year: "Sunlight takes about <strong>4 hours</strong> to reach Neptune.",
+        stats: [["Diameter", "49,500 km"], ["From Sun", "4.5 billion km"], ["Moons", "16"]]
       }
     };
 
@@ -603,6 +643,7 @@
     const factName = document.querySelector("#fact-name");
     const factPosition = document.querySelector("#fact-position");
     const factText = document.querySelector("#fact-text");
+    const factStats = document.querySelector("#fact-stats");
     const factYear = document.querySelector("#fact-year");
     const announcement = document.querySelector("#announcement");
     let introTimers = [];
@@ -640,8 +681,18 @@
         factName.textContent = name;
         factPosition.textContent = fact.position;
         factText.textContent = fact.text;
+        factStats.replaceChildren(...fact.stats.map(([label, value]) => {
+          const item = document.createElement("div");
+          item.className = "fact-stat";
+          const term = document.createElement("dt");
+          term.textContent = label;
+          const detail = document.createElement("dd");
+          detail.textContent = value;
+          item.append(term, detail);
+          return item;
+        }));
         factYear.innerHTML = fact.year;
-        announcement.textContent = `${name}. ${fact.text} ${fact.year.replace(/<[^>]*>/g, "")}`;
+        announcement.textContent = `${name}. ${fact.text} ${fact.stats.map(([label, value]) => `${label}: ${value}`).join(". ")}. ${fact.year.replace(/<[^>]*>/g, "")}`;
       });
     });
 
